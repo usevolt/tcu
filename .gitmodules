@@ -1,0 +1,9 @@
+[submodule "sw/uw_can"]
+	path = sw/uw_can
+	url = https://github.com/usevolt/uw_can.git
+[submodule "sw/--force"]
+	path = sw/--force
+	url = https://github.com/usevolt/uv_hal.git
+[submodule "sw/uv_hal"]
+	path = sw/uv_hal
+	url = https://github.com/usevolt/uv_hal.git
