@@ -40,11 +40,11 @@ canopen_object_st obj_dict[] = {
 				.sub_index = TCU_DRIVE_REQ_SUBINDEX,
 				.type = TCU_DRIVE_REQ_TYPE,
 				.permissions = TCU_DRIVE_REQ_PERMISSIONS,
-				.data_ptr = &this->drive.input.request
+				.data_ptr = &this->drive.request
 		},
 		{
 				.main_index = TCU_DRIVE_PARAM_INDEX,
-				.sub_index = TCU_DRIVE_PARAM_ARRAY_MAX_SIZE,
+				.array_max_size = TCU_DRIVE_PARAM_ARRAY_MAX_SIZE,
 				.type = TCU_DRIVE_PARAM_TYPE,
 				.permissions = TCU_DRIVE_PARAM_PERMISSIONS,
 				.data_ptr = &this->drive_conf
@@ -64,11 +64,39 @@ canopen_object_st obj_dict[] = {
 				.data_ptr = &this->drive.out2.current_ma
 		},
 		{
-				.main_index = TCU_DRIVE_CURRENT3_INDEX,
-				.sub_index = TCU_DRIVE_CURRENT3_SUBINDEX,
-				.type = TCU_DRIVE_CURRENT3_TYPE,
-				.permissions = TCU_DRIVE_CURRENT3_PERMISSIONS,
-				.data_ptr = &this->drive.out3.current_ma
+				.main_index = TCU_D4WD_REQ_INDEX,
+				.sub_index = TCU_D4WD_REQ_SUBINDEX,
+				.type = TCU_D4WD_REQ_TYPE,
+				.permissions = TCU_D4WD_REQ_PERMISSIONS,
+				.data_ptr = &this->drive.d4wd_request
+		},
+		{
+				.main_index = TCU_D4WD_CURRENT_INDEX,
+				.sub_index = TCU_D4WD_CURRENT_SUBINDEX,
+				.type = TCU_D4WD_CURRENT_TYPE,
+				.permissions = TCU_D4WD_CURRENT_PERMISSIONS,
+				.data_ptr = &this->drive.d4wd.current
+		},
+		{
+				.main_index = TCU_TELESCOPE_REQ_INDEX,
+				.sub_index = TCU_TELESCOPE_REQ_SUBINDEX,
+				.type = TCU_TELESCOPE_REQ_TYPE,
+				.permissions = TCU_TELESCOPE_REQ_PERMISSIONS,
+				.data_ptr = &this->telescope.request
+		},
+		{
+				.main_index = TCU_TELESCOPE_PARAM_INDEX,
+				.array_max_size = TCU_TELESCOPE_PARAM_ARRAY_MAX_SIZE,
+				.type = TCU_TELESCOPE_PARAM_TYPE,
+				.permissions = TCU_TELESCOPE_PARAM_PERMISSIONS,
+				.data_ptr = &this->telescope_conf
+		},
+		{
+				.main_index = TCU_TELESCOPE_CURRENT_INDEX,
+				.sub_index = TCU_TELESCOPE_CURRENT_SUBINDEX,
+				.type = TCU_TELESCOPE_CURRENT_TYPE,
+				.permissions = TCU_TELESCOPE_CURRENT_PERMISSIONS,
+				.data_ptr = &this->telescope.out.current_ma
 		},
 
 
@@ -80,6 +108,13 @@ canopen_object_st obj_dict[] = {
 				.type = CCU_GEAR_TYPE,
 				.permissions = CCU_GEAR_PERMISSIONS,
 				.data_ptr = &this->drive.gear
+		},
+		{
+				.main_index = TCU_CCU_INDEX_OFFSET + CCU_DRIVE_REQ_INDEX,
+				.sub_index = CCU_DRIVE_REQ_SUBINDEX,
+				.type = CCU_DRIVE_REQ_TYPE,
+				.permissions = CCU_DRIVE_REQ_PERMISSIONS,
+				.data_ptr = &this->drive.request
 		},
 		{
 				.main_index = TCU_FSB_INDEX_OFFSET + FSB_IGNKEY_INDEX,
@@ -137,7 +172,7 @@ const uv_command_st terminal_commands[] = {
 				.id = CMD_SET,
 				.str = "set",
 				.instructions = "Sets the configurations for output modules.\n"
-						"Usage: set <\"str\"/\"g1\"/\"g2\"/\"g3\"/\"cabrot\"/\"telescope\"> "
+						"Usage: set <\"drive\"/\"telescope\"> "
 						"<\"maxa\"/\"maxb\"/\"mina\"/\"minb\"/\"acc\"/\"dec\"/\"invert\">"
 						"<value>",
 				.callback = &set_callb
@@ -168,9 +203,10 @@ void stat_callb(void* me, unsigned int cmd, unsigned int args, argument_st *argv
 	printf("Gear: %u\n", this->drive.gear + 1);
 	stat_output(&this->drive.out1, "Drive 1");
 	stat_output(&this->drive.out2, "Drive 2");
-	stat_output(&this->drive.out3, "Drive 3");
-	printf("Pedal: state: %u, hal1: %i hal2: %i request: %i\n",
-			this->pedal.state, this->pedal.req[0], this->pedal.req[1], this->pedal.request);
+	printf("4WD state: %u, current: %i mA\n",
+			uv_output_get_state(&this->drive.d4wd),
+			uv_output_get_current(&this->drive.d4wd));
+	stat_output(&this->telescope.out, "Telescope");
 	printf("emcy: %u, seat sw: %u, ignkey state: %u, fsb heartbeat expired: %u\n",
 			this->fsb.emcy, this->fsb.seat_sw, this->fsb.ignkey_state,
 			uv_canopen_heartbeat_producer_is_expired(FSB_NODE_ID));
@@ -184,14 +220,11 @@ void set_callb(void* me, unsigned int cmd, unsigned int args, argument_st *argv)
 		uv_dual_solenoid_output_conf_st *conf = NULL;
 		const char *str = argv[0].str;
 
-		if (strcmp(str, "g1") == 0) {
-			conf = &this->drive_conf.gear_conf[TCU_GEAR_1];
+		if (strcmp(str, "drive") == 0) {
+			conf = &this->drive_conf.drive_conf;
 		}
-		else if (strcmp(str, "g2") == 0) {
-			conf = &this->drive_conf.gear_conf[TCU_GEAR_2];
-		}
-		else if (strcmp(str, "g3") == 0) {
-			conf = &this->drive_conf.gear_conf[TCU_GEAR_3];
+		else if (strcmp(str, "telescope") == 0) {
+			conf = &this->telescope_conf.out_conf;
 		}
 		else {
 			printf("Unknown module '%s'\n", str);
