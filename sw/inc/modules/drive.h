@@ -42,6 +42,8 @@ typedef struct {
 	int8_t request;
 	int8_t d4wd_request;
 	int8_t d4wd_req2;
+	// indicates that driving is always disabled and d4wd is active always
+	bool drive_disabled;
 
 	// output for only 1st gear
 	uv_dual_solenoid_output_st out1;
@@ -75,6 +77,10 @@ static inline int16_t drive_get_current2(drive_st *this) {
 
 static inline void drive_set_d4wd_req(drive_st *this, int8_t req) {
 	this->d4wd_req2 = req;
+}
+
+static inline void drive_set_drive_disabled(drive_st *this, bool value) {
+	this->drive_disabled = value;
 }
 
 /// @brief: Step function for the solenoid driver module. Should be called

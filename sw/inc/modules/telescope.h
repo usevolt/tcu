@@ -31,13 +31,10 @@ typedef struct {
 void telescope_conf_reset(telescope_conf_st *this);
 
 
-#define TELESCOPE_REQ_DELAY_MS			100
-
 
 typedef struct {
 	int8_t request;
 
-	uv_delay_st req_delay;
 	uv_dual_solenoid_output_st out;
 
 	telescope_conf_st *conf;

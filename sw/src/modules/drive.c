@@ -26,8 +26,8 @@
 
 
 void drive_conf_reset(drive_conf_st *this) {
-	this->drive_conf.acc = DUAL_SOLENOID_ACC_MAX;
-	this->drive_conf.dec = DUAL_SOLENOID_DEC_MAX;
+	this->drive_conf.acc = 70;
+	this->drive_conf.dec = 85;
 	this->drive_conf.invert = false;
 	this->drive_conf.assembly_invert = false;
 	this->drive_conf.solenoid_conf[DUAL_OUTPUT_SOLENOID_A].max_ma = 1500;
@@ -46,6 +46,7 @@ void drive_init(drive_st *this, drive_conf_st *conf_ptr) {
 	this->d4wd_req2 = 0;
 	this->conf = conf_ptr;
 	this->gear = CCU_GEAR_1;
+	this->drive_disabled = false;
 
 	if (this->conf->comp.b > 100 ||
 			this->conf->comp.b < -100) {
@@ -76,7 +77,8 @@ void drive_step(drive_st *this, uint16_t step_ms) {
 	uv_dual_solenoid_output_set_conf(&this->out1, &this->conf->drive_conf);
 	uv_dual_solenoid_output_set_conf(&this->out2, &this->conf->drive_conf);
 
-	int32_t req = (int32_t) this->request * 1000 / INT8_MAX;
+	int32_t req = (int32_t) this->request * 1000 / INT8_MAX *
+			((this->conf->drive_conf.invert) ? -1 : 1);
 	if (req > 1000) {
 		req = 1000;
 	}
@@ -87,7 +89,9 @@ void drive_step(drive_st *this, uint16_t step_ms) {
 
 	}
 
-	if (this->d4wd_request || this->d4wd_req2) {
+	if (this->d4wd_request ||
+			this->d4wd_req2 ||
+			(this->drive_disabled && req)) {
 		uv_output_set(&this->d4wd, OUTPUT_STATE_ON);
 		// make sure driving is disabled when telescope request is active
 		req = 0;
@@ -97,8 +101,8 @@ void drive_step(drive_st *this, uint16_t step_ms) {
 			uv_output_set(&this->d4wd, OUTPUT_STATE_OFF);
 		}
 		else {
-			uv_output_set(&this->d4wd, (this->request != 0) ?
-					OUTPUT_STATE_ON : OUTPUT_STATE_OFF);
+			uv_output_set(&this->d4wd,
+					req ? OUTPUT_STATE_ON : OUTPUT_STATE_OFF);
 			req = 0;
 		}
 	}

@@ -27,13 +27,6 @@ static bool initialized = false;
 
 
 
-void sdo_callb(uint16_t mindex, uint8_t sindex) {
-	if (mindex == TCU_TELESCOPE_REQ_INDEX &&
-			sindex == TCU_TELESCOPE_REQ_SUBINDEX) {
-		uv_delay_init(&this->telescope.req_delay, TELESCOPE_REQ_DELAY_MS);
-	}
-}
-
 
 void init(dev_st* me) {
 	// load non-volatile data
@@ -60,7 +53,6 @@ void init(dev_st* me) {
 	drive_init(&this->drive, &this->drive_conf);
 	telescope_init(&this->telescope, &this->telescope_conf);
 
-	uv_canopen_set_sdo_write_callback(&sdo_callb);
 	uv_canopen_set_state(CANOPEN_OPERATIONAL);
 
 	initialized = true;
@@ -109,6 +101,7 @@ void step(void* me) {
 		// outputs are disables if FSB is not found, ignition key is not in ON state,
 		// or emergency switch is pressed
 		if (uv_canopen_heartbeat_producer_is_expired(FSB_NODE_ID) ||
+			uv_canopen_heartbeat_producer_is_expired(LKEYPAD_NODE_ID) ||
 				(this->fsb.ignkey_state != FSB_IGNKEY_STATE_ON) ||
 				this->fsb.emcy ||
 				!this->fsb.seat_sw ||
