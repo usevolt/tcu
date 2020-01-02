@@ -42,6 +42,8 @@ typedef struct {
 	int8_t request;
 	int8_t d4wd_request;
 	int8_t d4wd_req2;
+	ccu_cabdir_e cab_dir;
+
 	// indicates that driving is always disabled and d4wd is active always
 	bool drive_disabled;
 

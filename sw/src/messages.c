@@ -117,6 +117,13 @@ canopen_object_st obj_dict[] = {
 				.data_ptr = &this->drive.request
 		},
 		{
+				.main_index = TCU_CCU_INDEX_OFFSET + CCU_CABROT_DIR_INDEX,
+				.sub_index = CCU_CABROT_DIR_SUBINDEX,
+				.type = CCU_CABROT_DIR_TYPE,
+				.permissions = CCU_CABROT_DIR_PERMISSIONS,
+				.data_ptr = &this->drive.cab_dir
+		},
+		{
 				.main_index = TCU_FSB_INDEX_OFFSET + FSB_IGNKEY_INDEX,
 				.sub_index = FSB_IGNKEY_SUBINDEX,
 				.type = FSB_IGNKEY_TYPE,

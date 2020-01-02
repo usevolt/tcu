@@ -47,6 +47,7 @@ void drive_init(drive_st *this, drive_conf_st *conf_ptr) {
 	this->conf = conf_ptr;
 	this->gear = CCU_GEAR_1;
 	this->drive_disabled = false;
+	this->cab_dir = CCU_CABDIR_FORWARD;
 
 	if (this->conf->comp.b > 100 ||
 			this->conf->comp.b < -100) {
@@ -78,7 +79,8 @@ void drive_step(drive_st *this, uint16_t step_ms) {
 	uv_dual_solenoid_output_set_conf(&this->out2, &this->conf->drive_conf);
 
 	int32_t req = (int32_t) this->request * 1000 / INT8_MAX *
-			((this->conf->drive_conf.invert) ? -1 : 1);
+			((this->conf->drive_conf.invert) ? -1 : 1) *
+			((this->cab_dir == CCU_CABDIR_FORWARD) ? 1 : -1);
 	if (req > 1000) {
 		req = 1000;
 	}
